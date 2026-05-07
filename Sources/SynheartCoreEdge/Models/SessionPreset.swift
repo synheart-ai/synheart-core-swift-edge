@@ -1,13 +1,13 @@
 import Foundation
 
 /// A session preset — either synced from phone or built-in for standalone use.
-struct SessionPreset: Codable, Identifiable {
-    let id: String
-    let label: String
-    let mode: String
-    let durationSec: Int
-    let profile: ComputeProfile
-    let kind: SessionKind
+public struct SessionPreset: Codable, Identifiable {
+    public let id: String
+    public let label: String
+    public let mode: String
+    public let durationSec: Int
+    public let profile: ComputeProfile
+    public let kind: SessionKind
 
     enum CodingKeys: String, CodingKey {
         case id, label, mode, kind
@@ -15,8 +15,8 @@ struct SessionPreset: Codable, Identifiable {
         case profile
     }
 
-    init(id: String, label: String, mode: String, durationSec: Int,
-         profile: ComputeProfile, kind: SessionKind = .focus) {
+    public init(id: String, label: String, mode: String, durationSec: Int,
+                profile: ComputeProfile, kind: SessionKind = .focus) {
         self.id = id
         self.label = label
         self.mode = mode
@@ -25,7 +25,7 @@ struct SessionPreset: Codable, Identifiable {
         self.kind = kind
     }
 
-    init(from map: [String: Any]) throws {
+    public init(from map: [String: Any]) throws {
         guard let id = map["id"] as? String else {
             throw SessionConfigError.missing("preset id")
         }
@@ -51,7 +51,7 @@ struct SessionPreset: Codable, Identifiable {
     }
 
     /// Create a phone-initiated SessionConfig from this preset.
-    func toSessionConfig() -> SessionConfig {
+    public func toSessionConfig() -> SessionConfig {
         SessionConfig(
             sessionId: UUID().uuidString,
             mode: mode,
@@ -64,7 +64,7 @@ struct SessionPreset: Codable, Identifiable {
     }
 
     /// Create a standalone edge SessionConfig (RFC §4.2).
-    func toEdgeSessionConfig(sessionManager: EdgeSessionManager) -> SessionConfig {
+    public func toEdgeSessionConfig(sessionManager: EdgeSessionManager) -> SessionConfig {
         SessionConfig(
             sessionId: sessionManager.generateSessionId(),
             mode: mode,
@@ -77,7 +77,7 @@ struct SessionPreset: Codable, Identifiable {
     }
 
     /// Built-in presets for standalone edge sessions + phone-synced.
-    static let defaults: [SessionPreset] = [
+    public static let defaults: [SessionPreset] = [
         SessionPreset(
             id: "default_focus_5", label: "Focus 5 min", mode: "focus",
             durationSec: 300, profile: ComputeProfile(windowSec: 60, emitIntervalSec: 5),
@@ -101,7 +101,7 @@ struct SessionPreset: Codable, Identifiable {
     ]
 
     /// Parse an array of presets from a sync_presets command payload.
-    static func parsePresets(from message: [String: Any]) -> [SessionPreset] {
+    public static func parsePresets(from message: [String: Any]) -> [SessionPreset] {
         guard let presetMaps = message["presets"] as? [[String: Any]] else { return [] }
         return presetMaps.compactMap { try? SessionPreset(from: $0) }
     }

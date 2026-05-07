@@ -4,19 +4,21 @@ import Foundation
 import CoreMotion
 
 /// Streams accelerometer data at ~25 Hz via CMMotionManager.
-final class MotionSensor {
+public final class MotionSensor {
 
     private let motionManager = CMMotionManager()
     private let queue = OperationQueue()
     private var continuation: AsyncThrowingStream<MotionSample, Error>.Continuation?
 
+    public init() {}
+
     /// Whether the device has an accelerometer.
-    var isAvailable: Bool {
+    public var isAvailable: Bool {
         motionManager.isAccelerometerAvailable
     }
 
     /// Start streaming accelerometer samples as an AsyncThrowingStream.
-    func startStreaming() -> AsyncThrowingStream<MotionSample, Error> {
+    public func startStreaming() -> AsyncThrowingStream<MotionSample, Error> {
         return AsyncThrowingStream { [weak self] continuation in
             guard let self = self else {
                 continuation.finish()
@@ -58,7 +60,7 @@ final class MotionSensor {
     }
 
     /// Stop accelerometer updates.
-    func stopStreaming() {
+    public func stopStreaming() {
         motionManager.stopAccelerometerUpdates()
         continuation?.finish()
         continuation = nil
@@ -69,12 +71,13 @@ final class MotionSensor {
 
 /// Stub for platforms without CoreMotion (e.g. macOS host running tests).
 /// All operations are no-ops; `isAvailable` is always `false`.
-final class MotionSensor {
-    var isAvailable: Bool { false }
-    func startStreaming() -> AsyncThrowingStream<MotionSample, Error> {
+public final class MotionSensor {
+    public init() {}
+    public var isAvailable: Bool { false }
+    public func startStreaming() -> AsyncThrowingStream<MotionSample, Error> {
         AsyncThrowingStream { continuation in continuation.finish() }
     }
-    func stopStreaming() { }
+    public func stopStreaming() { }
 }
 
 #endif

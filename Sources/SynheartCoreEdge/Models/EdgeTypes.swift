@@ -2,19 +2,19 @@ import Foundation
 import CryptoKit
 
 /// RFC §6 — Delivery mode.
-enum DeliveryMode: String, Codable {
+public enum DeliveryMode: String, Codable {
     case realtime = "REALTIME"
     case passiveSync = "PASSIVE_SYNC"
 }
 
 /// RFC §4 — Session origin.
-enum SessionOrigin: String, Codable {
+public enum SessionOrigin: String, Codable {
     case phone = "PHONE"
     case edge = "EDGE"
 }
 
 /// RFC §4.2.1 — Session kinds (presets).
-enum SessionKind: String, Codable, CaseIterable {
+public enum SessionKind: String, Codable, CaseIterable {
     case nap = "NAP"
     case sleep = "SLEEP"
     case workout = "WORKOUT"
@@ -24,17 +24,17 @@ enum SessionKind: String, Codable, CaseIterable {
 }
 
 /// RFC §6 — HSI artifact envelope.
-struct HsiArtifactEnvelope: Codable {
-    let artifactId: String
-    let sessionId: String
-    let seq: Int
-    let createdAtMs: Int64
-    let schemaVersion: String
-    let payloadHashSha256: String
-    let payloadJson: String
-    let deliveryMode: DeliveryMode
-    let sessionOrigin: SessionOrigin
-    let sessionKind: SessionKind?
+public struct HsiArtifactEnvelope: Codable {
+    public let artifactId: String
+    public let sessionId: String
+    public let seq: Int
+    public let createdAtMs: Int64
+    public let schemaVersion: String
+    public let payloadHashSha256: String
+    public let payloadJson: String
+    public let deliveryMode: DeliveryMode
+    public let sessionOrigin: SessionOrigin
+    public let sessionKind: SessionKind?
 
     enum CodingKeys: String, CodingKey {
         case artifactId = "artifact_id"
@@ -50,7 +50,7 @@ struct HsiArtifactEnvelope: Codable {
     }
 
     /// Create an envelope wrapping an HSI JSON payload.
-    static func wrap(
+    public static func wrap(
         sessionId: String,
         seq: Int,
         hsiJson: String,
@@ -77,7 +77,7 @@ struct HsiArtifactEnvelope: Codable {
     }
 
     /// Serialize to dictionary for WCSession transmission.
-    func toMessage() -> [String: Any] {
+    public func toMessage() -> [String: Any] {
         var msg: [String: Any] = [
             "type": "hsi_artifact",
             "artifact_id": artifactId,

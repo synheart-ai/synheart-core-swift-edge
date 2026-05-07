@@ -2,18 +2,18 @@ import Foundation
 
 /// RFC §3.5 + §7.1 — Durable artifact outbox.
 /// File-based persistence. Survives restart. Deletes on ACK.
-final class EdgeOutbox {
+public final class EdgeOutbox {
     private let directory: URL
     private let queue = DispatchQueue(label: "ai.synheart.edge.outbox")
 
-    init() {
+    public init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         self.directory = docs.appendingPathComponent("edge_outbox", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
     /// Persist an artifact envelope to disk.
-    func enqueue(_ envelope: HsiArtifactEnvelope) {
+    public func enqueue(_ envelope: HsiArtifactEnvelope) {
         queue.async { [weak self] in
             guard let self = self else { return }
             let file = self.directory.appendingPathComponent("\(envelope.artifactId).json")
@@ -24,7 +24,7 @@ final class EdgeOutbox {
     }
 
     /// Acknowledge receipt — delete from outbox.
-    func ack(artifactId: String) {
+    public func ack(artifactId: String) {
         queue.async { [weak self] in
             guard let self = self else { return }
             let file = self.directory.appendingPathComponent("\(artifactId).json")
@@ -33,14 +33,14 @@ final class EdgeOutbox {
     }
 
     /// Acknowledge multiple artifacts.
-    func ackBatch(artifactIds: [String]) {
+    public func ackBatch(artifactIds: [String]) {
         for id in artifactIds {
             ack(artifactId: id)
         }
     }
 
     /// Load all pending (un-ACKed) envelopes.
-    func pending() -> [HsiArtifactEnvelope] {
+    public func pending() -> [HsiArtifactEnvelope] {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
             return []
@@ -55,7 +55,7 @@ final class EdgeOutbox {
     }
 
     /// Number of pending artifacts.
-    var pendingCount: Int {
+    public var pendingCount: Int {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else {
             return 0
@@ -64,7 +64,7 @@ final class EdgeOutbox {
     }
 
     /// Clear all artifacts (e.g. on full sync completion).
-    func clear() {
+    public func clear() {
         queue.async { [weak self] in
             guard let self = self else { return }
             let fm = FileManager.default

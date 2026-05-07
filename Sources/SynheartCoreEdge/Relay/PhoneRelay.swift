@@ -4,10 +4,10 @@ import Foundation
 import WatchConnectivity
 
 /// Watch-side WCSession relay with outbox integration and sync protocol (RFC §5).
-final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
+public final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
 
-    @Published private(set) var isPhoneReachable = false
-    @Published private(set) var presets: [SessionPreset] = []
+    @Published public private(set) var isPhoneReachable = false
+    @Published public private(set) var presets: [SessionPreset] = []
 
     private var onCommand: (([String: Any]) -> Void)?
     private var outbox: EdgeOutbox?
@@ -15,7 +15,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
 
     private static let presetsKey = "synheart_cached_presets"
 
-    override init() {
+    public override init() {
         super.init()
         loadCachedPresets()
         guard WCSession.isSupported() else { return }
@@ -23,17 +23,17 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
         WCSession.default.activate()
     }
 
-    func configure(outbox: EdgeOutbox, sessionManager: EdgeSessionManager) {
+    public func configure(outbox: EdgeOutbox, sessionManager: EdgeSessionManager) {
         self.outbox = outbox
         self.sessionManager = sessionManager
     }
 
-    func onCommandReceived(_ handler: @escaping ([String: Any]) -> Void) {
+    public func onCommandReceived(_ handler: @escaping ([String: Any]) -> Void) {
         self.onCommand = handler
     }
 
     /// Send a session event to the phone.
-    func sendEvent(_ event: SessionEvent) {
+    public func sendEvent(_ event: SessionEvent) {
         guard WCSession.default.isReachable else {
             NSLog("[PhoneRelay] Phone not reachable, event queued in outbox")
             return
@@ -44,7 +44,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     }
 
     /// Send a real-time HR sample to the phone.
-    func sendHrSample(_ message: [String: Any]) {
+    public func sendHrSample(_ message: [String: Any]) {
         guard WCSession.default.isReachable else { return }
         WCSession.default.sendMessage(message, replyHandler: nil) { error in
             NSLog("[PhoneRelay] HR sample send failed: \(error.localizedDescription)")
@@ -52,7 +52,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     }
 
     /// Send an artifact envelope — prefer transferUserInfo for durability (RFC §11).
-    func sendArtifact(_ envelope: HsiArtifactEnvelope) {
+    public func sendArtifact(_ envelope: HsiArtifactEnvelope) {
         if WCSession.default.isReachable {
             WCSession.default.sendMessage(envelope.toMessage(), replyHandler: nil) { error in
                 NSLog("[PhoneRelay] artifact send failed: \(error.localizedDescription)")
@@ -64,7 +64,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     }
 
     /// Retry all pending artifacts from outbox (RFC §7.1).
-    func retryPendingArtifacts() {
+    public func retryPendingArtifacts() {
         guard let outbox = outbox else { return }
         let pending = outbox.pending()
         for envelope in pending {
@@ -73,7 +73,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     }
 
     /// Sync all pending edge sessions (RFC §5.1).
-    func syncEdgeSessions() {
+    public func syncEdgeSessions() {
         guard let mgr = sessionManager, let outbox = outbox else { return }
 
         let pendingSessions = mgr.pendingSessions()
@@ -87,7 +87,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     }
 
     /// Handle ACK from phone — delete acknowledged artifacts from outbox.
-    func handleAck(message: [String: Any]) {
+    public func handleAck(message: [String: Any]) {
         guard let artifactIds = message["artifact_ids"] as? [String] else { return }
         outbox?.ackBatch(artifactIds: artifactIds)
 
@@ -99,7 +99,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     }
 
     /// Handle sync response from phone (RFC §5.1 Step 2).
-    func handleSyncResponse(message: [String: Any]) {
+    public func handleSyncResponse(message: [String: Any]) {
         guard let sessionId = message["session_id"] as? String,
               let response = message["response"] as? String else { return }
 
@@ -143,9 +143,9 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
 
     // MARK: - WCSessionDelegate
 
-    func session(_ session: WCSession,
-                 activationDidCompleteWith activationState: WCSessionActivationState,
-                 error: Error?) {
+    public func session(_ session: WCSession,
+                        activationDidCompleteWith activationState: WCSessionActivationState,
+                        error: Error?) {
         DispatchQueue.main.async { [weak self] in
             self?.isPhoneReachable = session.isReachable
         }
@@ -154,7 +154,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
         }
     }
 
-    func sessionReachabilityDidChange(_ session: WCSession) {
+    public func sessionReachabilityDidChange(_ session: WCSession) {
         let reachable = session.isReachable
         DispatchQueue.main.async { [weak self] in
             self?.isPhoneReachable = reachable
@@ -166,7 +166,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
         }
     }
 
-    func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+    public func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         if let command = message["command"] as? String {
             switch command {
             case "sync_presets":
@@ -184,7 +184,7 @@ final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
         }
     }
 
-    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
+    public func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
         if let command = applicationContext["command"] as? String, command == "sync_presets" {
             handlePresetsUpdate(from: applicationContext)
         }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Events sent from watch to phone (and phone to watch for ACKs/sync).
-enum SessionEvent {
+public enum SessionEvent {
     case started(sessionId: String, startedAtMs: Int64)
     case frame(sessionId: String, seq: Int, emittedAtMs: Int64, metrics: [String: Any])
     case artifact(envelope: HsiArtifactEnvelope)
@@ -14,7 +14,7 @@ enum SessionEvent {
     case sessionAck(sessionId: String, artifactIds: [String])
 
     /// Serialize to dictionary for WCSession transmission.
-    func toMessage() -> [String: Any] {
+    public func toMessage() -> [String: Any] {
         switch self {
         case .started(let sessionId, let startedAtMs):
             return [

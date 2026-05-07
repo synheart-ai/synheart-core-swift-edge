@@ -1,37 +1,37 @@
 import Foundation
 
-struct ComputeProfile: Codable {
-    let windowSec: Int
-    let emitIntervalSec: Int
+public struct ComputeProfile: Codable {
+    public let windowSec: Int
+    public let emitIntervalSec: Int
 
     enum CodingKeys: String, CodingKey {
         case windowSec = "window_sec"
         case emitIntervalSec = "emit_interval_sec"
     }
 
-    init(windowSec: Int = 60, emitIntervalSec: Int = 5) {
+    public init(windowSec: Int = 60, emitIntervalSec: Int = 5) {
         self.windowSec = windowSec
         self.emitIntervalSec = emitIntervalSec
     }
 
-    init(from map: [String: Any]) {
+    public init(from map: [String: Any]) {
         self.windowSec = map["window_sec"] as? Int ?? 60
         self.emitIntervalSec = map["emit_interval_sec"] as? Int ?? 5
     }
 }
 
-struct SessionConfig {
-    let sessionId: String
-    let mode: String
-    let durationSec: Int
-    let profile: ComputeProfile
-    let windowLabel: String?
-    let origin: SessionOrigin
-    let kind: SessionKind
+public struct SessionConfig {
+    public let sessionId: String
+    public let mode: String
+    public let durationSec: Int
+    public let profile: ComputeProfile
+    public let windowLabel: String?
+    public let origin: SessionOrigin
+    public let kind: SessionKind
 
-    init(sessionId: String, mode: String, durationSec: Int,
-         profile: ComputeProfile = ComputeProfile(), windowLabel: String? = nil,
-         origin: SessionOrigin = .phone, kind: SessionKind = .focus) {
+    public init(sessionId: String, mode: String, durationSec: Int,
+                profile: ComputeProfile = ComputeProfile(), windowLabel: String? = nil,
+                origin: SessionOrigin = .phone, kind: SessionKind = .focus) {
         self.sessionId = sessionId
         self.mode = mode
         self.durationSec = durationSec
@@ -42,7 +42,7 @@ struct SessionConfig {
     }
 
     /// Initialize from a phone command (Mode A — phone-initiated).
-    init(fromPhoneCommand map: [String: Any]) throws {
+    public init(fromPhoneCommand map: [String: Any]) throws {
         guard let sessionId = map["session_id"] as? String else {
             throw SessionConfigError.missing("session_id")
         }
@@ -66,11 +66,11 @@ struct SessionConfig {
     }
 
     /// Delivery mode derived from origin (RFC §6).
-    var deliveryMode: DeliveryMode {
+    public var deliveryMode: DeliveryMode {
         origin == .phone ? .realtime : .passiveSync
     }
 }
 
-enum SessionConfigError: Error {
+public enum SessionConfigError: Error {
     case missing(String)
 }

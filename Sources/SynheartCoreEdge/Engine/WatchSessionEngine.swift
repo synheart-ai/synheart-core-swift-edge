@@ -21,29 +21,29 @@ public enum EngineMode {
 /// (HealthKit-backed, multi-device aware). Motion (accel) is captured locally
 /// since HealthKit doesn't stream raw IMU. Session lifecycle is owned by this
 /// engine; the runtime owns all signal math when `mode == .computeLocal`.
-final class WatchSessionEngine: ObservableObject {
+public final class WatchSessionEngine: ObservableObject {
 
     // MARK: - Published state
 
-    @Published private(set) var state: WatchSessionState = .idle
-    @Published private(set) var currentHr: Double = 0
-    @Published private(set) var elapsedSec: Int = 0
-    @Published private(set) var lastMetrics: [String: Any]?
-    @Published private(set) var sessionKind: SessionKind = .focus
-    @Published private(set) var mode: EngineMode = .stream
+    @Published public private(set) var state: WatchSessionState = .idle
+    @Published public private(set) var currentHr: Double = 0
+    @Published public private(set) var elapsedSec: Int = 0
+    @Published public private(set) var lastMetrics: [String: Any]?
+    @Published public private(set) var sessionKind: SessionKind = .focus
+    @Published public private(set) var mode: EngineMode = .stream
 
     // MARK: - Event stream
 
-    var onEvent: ((SessionEvent) -> Void)?
-    var onHrSample: ((Double, Int64) -> Void)?
+    public var onEvent: ((SessionEvent) -> Void)?
+    public var onHrSample: ((Double, Int64) -> Void)?
     /// Stream mode only: fires for every biosignal sample so the host app can
     /// relay raw data to the paired phone.
-    var onBiosignalSample: ((BiosignalSample) -> Void)?
+    public var onBiosignalSample: ((BiosignalSample) -> Void)?
 
     // MARK: - Dependencies (internal access for app wiring)
 
-    let outbox: EdgeOutbox
-    private(set) var sessionManager: EdgeSessionManager?
+    public let outbox: EdgeOutbox
+    public private(set) var sessionManager: EdgeSessionManager?
 
     // MARK: - Internal
 
@@ -59,9 +59,9 @@ final class WatchSessionEngine: ObservableObject {
     private let motionSensor: MotionSensor
     private var motionTask: Task<Void, Never>?
 
-    init(motionSensor: MotionSensor = MotionSensor(),
-         outbox: EdgeOutbox = EdgeOutbox(),
-         sessionManager: EdgeSessionManager? = nil) {
+    public init(motionSensor: MotionSensor = MotionSensor(),
+                outbox: EdgeOutbox = EdgeOutbox(),
+                sessionManager: EdgeSessionManager? = nil) {
         self.motionSensor = motionSensor
         self.outbox = outbox
         self.sessionManager = sessionManager
@@ -72,7 +72,7 @@ final class WatchSessionEngine: ObservableObject {
     /// Start a session. If `mode` is nil the engine resolves it: try to load
     /// `synheart-core-runtime` — if available, run `.computeLocal`; otherwise
     /// fall back to `.stream` (raw samples surfaced via `onBiosignalSample`).
-    func startSession(config: SessionConfig, mode requestedMode: EngineMode? = nil) {
+    public func startSession(config: SessionConfig, mode requestedMode: EngineMode? = nil) {
         guard state.canTransition(to: .starting) else { return }
         transition(to: .starting)
 
@@ -127,14 +127,14 @@ final class WatchSessionEngine: ObservableObject {
         }
     }
 
-    func stopSession() {
+    public func stopSession() {
         guard state.canTransition(to: .stopping) else { return }
         transition(to: .stopping)
         finishSession()
     }
 
     /// Start a standalone edge session from a preset (RFC §4.2).
-    func startEdgeSession(preset: SessionPreset, mode requestedMode: EngineMode? = nil) {
+    public func startEdgeSession(preset: SessionPreset, mode requestedMode: EngineMode? = nil) {
         guard let mgr = sessionManager else {
             startSession(config: preset.toSessionConfig(), mode: requestedMode)
             return
@@ -145,11 +145,11 @@ final class WatchSessionEngine: ObservableObject {
 
     // MARK: - Outbox access
 
-    var pendingArtifactCount: Int { outbox.pendingCount }
+    public var pendingArtifactCount: Int { outbox.pendingCount }
 
-    func getPendingArtifacts() -> [HsiArtifactEnvelope] { outbox.pending() }
+    public func getPendingArtifacts() -> [HsiArtifactEnvelope] { outbox.pending() }
 
-    func acknowledgeArtifacts(ids: [String]) {
+    public func acknowledgeArtifacts(ids: [String]) {
         outbox.ackBatch(artifactIds: ids)
     }
 
@@ -350,7 +350,7 @@ final class WatchSessionEngine: ObservableObject {
     }
 
     /// Remaining seconds in the session.
-    var remainingSec: Int {
+    public var remainingSec: Int {
         guard let config = config, state == .running else { return 0 }
         return max(0, config.durationSec - elapsedSec)
     }

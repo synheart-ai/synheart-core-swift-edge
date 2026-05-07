@@ -2,11 +2,11 @@ import Foundation
 
 /// RFC §4.2 — Manages standalone edge sessions.
 /// Creates edge session IDs, tracks manifests, manages local session storage.
-final class EdgeSessionManager {
+public final class EdgeSessionManager {
     private let sessionsDir: URL
     private let deviceId: String
 
-    init() {
+    public init() {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         self.sessionsDir = docs.appendingPathComponent("edge_sessions", isDirectory: true)
         try? FileManager.default.createDirectory(at: sessionsDir, withIntermediateDirectories: true)
@@ -24,21 +24,21 @@ final class EdgeSessionManager {
 
     /// Generate an edge session ID per RFC §4.2.1.
     /// Format: edge_w_<deviceOpaque>_<timestamp>_<random>
-    func generateSessionId() -> String {
+    public func generateSessionId() -> String {
         let ts = Int64(Date().timeIntervalSince1970)
         let rand = UUID().uuidString.lowercased().prefix(6)
         return "edge_w_\(deviceId)_\(ts)_\(rand)"
     }
 
     /// Session manifest per RFC §4.2.2.
-    struct SessionManifest: Codable {
-        let sessionId: String
-        let kind: SessionKind
-        let startMs: Int64
-        var endMs: Int64?
-        let schemaVersion: String
-        var artifactCount: Int
-        var syncStatus: String  // "pending", "syncing", "synced"
+    public struct SessionManifest: Codable {
+        public let sessionId: String
+        public let kind: SessionKind
+        public let startMs: Int64
+        public var endMs: Int64?
+        public let schemaVersion: String
+        public var artifactCount: Int
+        public var syncStatus: String  // "pending", "syncing", "synced"
 
         enum CodingKeys: String, CodingKey {
             case sessionId = "session_id"
@@ -52,7 +52,7 @@ final class EdgeSessionManager {
     }
 
     /// Create a new edge session manifest.
-    func createSession(sessionId: String, kind: SessionKind) -> SessionManifest {
+    public func createSession(sessionId: String, kind: SessionKind) -> SessionManifest {
         let manifest = SessionManifest(
             sessionId: sessionId,
             kind: kind,
@@ -67,12 +67,12 @@ final class EdgeSessionManager {
     }
 
     /// Update a session manifest (e.g. increment artifact count, set end time).
-    func updateManifest(_ manifest: SessionManifest) {
+    public func updateManifest(_ manifest: SessionManifest) {
         saveManifest(manifest)
     }
 
     /// Load all session manifests with pending sync status.
-    func pendingSessions() -> [SessionManifest] {
+    public func pendingSessions() -> [SessionManifest] {
         let fm = FileManager.default
         guard let dirs = try? fm.contentsOfDirectory(at: sessionsDir, includingPropertiesForKeys: nil) else {
             return []
@@ -85,14 +85,14 @@ final class EdgeSessionManager {
     }
 
     /// Mark a session as synced.
-    func markSynced(sessionId: String) {
+    public func markSynced(sessionId: String) {
         guard var manifest = loadManifest(sessionId: sessionId) else { return }
         manifest.syncStatus = "synced"
         saveManifest(manifest)
     }
 
     /// Build a sync manifest message per RFC §5.1 Step 1.
-    func buildSyncManifest(for manifest: SessionManifest) -> [String: Any] {
+    public func buildSyncManifest(for manifest: SessionManifest) -> [String: Any] {
         var msg: [String: Any] = [
             "type": "edge_session_manifest",
             "session_id": manifest.sessionId,
