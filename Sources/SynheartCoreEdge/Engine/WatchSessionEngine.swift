@@ -58,6 +58,10 @@ public final class WatchSessionEngine: ObservableObject {
     private var bioProvider: HealthKitBiosignalProvider?
     private let motionSensor: MotionSensor
     private var motionTask: Task<Void, Never>?
+    /// Timestamp when the session entered `.paused`. Used by `resumeSession`
+    /// to advance `startedAtMs` so the paused interval doesn't count
+    /// against elapsed/remaining.
+    private var pausedAtMs: Int64 = 0
 
     public init(motionSensor: MotionSensor = MotionSensor(),
                 outbox: EdgeOutbox = EdgeOutbox(),
@@ -131,6 +135,46 @@ public final class WatchSessionEngine: ObservableObject {
         guard state.canTransition(to: .stopping) else { return }
         transition(to: .stopping)
         finishSession()
+    }
+
+    /// Host-driven pause. Snapshots `pausedAtMs` so a subsequent `resumeSession`
+    /// can shift `startedAtMs` forward by the paused interval — elapsed and
+    /// remaining time accounting skip the pause.
+    public func pauseSession() {
+        guard state.canTransition(to: .paused) else { return }
+        transition(to: .paused)
+        pausedAtMs = Int64(Date().timeIntervalSince1970 * 1000)
+        // Stop periodic timers; they'll be re-armed on resume.
+        frameTimer?.invalidate(); frameTimer = nil
+        elapsedTimer?.invalidate(); elapsedTimer = nil
+        durationTimer?.invalidate(); durationTimer = nil
+    }
+
+    /// Resume a paused session. Re-arms the frame / elapsed / duration timers
+    /// and advances `startedAtMs` by the paused interval.
+    public func resumeSession() {
+        guard state.canTransition(to: .running) else { return }
+        guard let cfg = config else { return }
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        let pausedFor = now - pausedAtMs
+        startedAtMs += pausedFor
+        transition(to: .running)
+
+        let interval = TimeInterval(cfg.profile.emitIntervalSec)
+        frameTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.emitFrame()
+        }
+        let remaining = max(0, cfg.durationSec - Int((now - startedAtMs) / 1000))
+        if remaining > 0 {
+            durationTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(remaining),
+                                                  repeats: false) { [weak self] _ in
+                self?.stopSession()
+            }
+        }
+        elapsedTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            self.elapsedSec = Int((Int64(Date().timeIntervalSince1970 * 1000) - self.startedAtMs) / 1000)
+        }
     }
 
     /// Start a standalone edge session from a preset (RFC §4.2).
