@@ -21,9 +21,9 @@ let package = Package(
         // (a path dep here would error with "package … depends on local
         // package … which is not supported" the moment a remote consumer
         // tries to resolve us). synheart-session-swift is pre-1.0; we pin
-        // via `from: "0.2.0"` and rely on its 0.2.x line staying compatible
+        // via `from: "0.2.1"` and rely on its 0.2.x line staying compatible
         // until we both tag stable.
-        .package(url: "https://github.com/synheart-ai/synheart-session-swift.git", from: "0.2.0"),
+        .package(url: "https://github.com/synheart-ai/synheart-session-swift.git", from: "0.2.1"),
         // synheart-core-runtime itself is loaded via dlsym in RuntimeBridge.swift;
         // no SwiftPM dependency declared.
     ],
