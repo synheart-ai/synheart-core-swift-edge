@@ -17,10 +17,13 @@ let package = Package(
         // iPhone HealthKit-backed BiosignalProvider).
         // Transitively pulls synheart-wear-swift.
         //
-        // Path-based for now (matches synheart-core-swift's pattern). Switch
-        // to a `.package(url: ...)` GitHub dep once synheart-session-swift
-        // tags a version that satisfies the SemVer constraint we want.
-        .package(path: "../synheart-session-swift"),
+        // URL-based so this SDK is consumable by external apps via SwiftPM
+        // (a path dep here would error with "package … depends on local
+        // package … which is not supported" the moment a remote consumer
+        // tries to resolve us). synheart-session-swift is pre-1.0; we pin
+        // via `from: "0.2.0"` and rely on its 0.2.x line staying compatible
+        // until we both tag stable.
+        .package(url: "https://github.com/synheart-ai/synheart-session-swift.git", from: "0.2.0"),
         // synheart-core-runtime itself is loaded via dlsym in RuntimeBridge.swift;
         // no SwiftPM dependency declared.
     ],
