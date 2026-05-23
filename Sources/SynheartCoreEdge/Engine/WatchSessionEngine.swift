@@ -55,7 +55,12 @@ public final class WatchSessionEngine: ObservableObject {
     private var frameTimer: Timer?
     private var durationTimer: Timer?
     private var elapsedTimer: Timer?
-    private var bioProvider: HealthKitBiosignalProvider?
+    private var bioProvider: BiosignalProvider?
+    /// Optional injected provider — when nil the engine constructs a
+    /// `HealthKitBiosignalProvider(wear: SynheartWear())` at session
+    /// start (default Apple-platform path). Inject to swap in a BLE
+    /// chest-strap, a mock for tests, or any custom HR source.
+    private let providerOverride: BiosignalProvider?
     private let motionSensor: MotionSensor
     private var motionTask: Task<Void, Never>?
     /// Timestamp when the session entered `.paused`. Used by `resumeSession`
@@ -63,9 +68,17 @@ public final class WatchSessionEngine: ObservableObject {
     /// against elapsed/remaining.
     private var pausedAtMs: Int64 = 0
 
-    public init(motionSensor: MotionSensor = MotionSensor(),
+    /// - Parameter provider: Optional. Pass a custom `BiosignalProvider`
+    ///   (BLE HRM, mock, etc.). When `nil` the engine defaults to
+    ///   `HealthKitBiosignalProvider(wear: SynheartWear())`, matching
+    ///   pre-0.0.3 behaviour. Mirrors the kotlin-edge SDK's
+    ///   `WatchSessionEngine(provider:, motionSensor:, ...)` shape so
+    ///   the two SDKs accept the same DI surface.
+    public init(provider: BiosignalProvider? = nil,
+                motionSensor: MotionSensor = MotionSensor(),
                 outbox: EdgeOutbox = EdgeOutbox(),
                 sessionManager: EdgeSessionManager? = nil) {
+        self.providerOverride = provider
         self.motionSensor = motionSensor
         self.outbox = outbox
         self.sessionManager = sessionManager
@@ -208,8 +221,10 @@ public final class WatchSessionEngine: ObservableObject {
     }
 
     private func startBiosignalProvider() {
-        let wear = SynheartWear()
-        let provider = HealthKitBiosignalProvider(wear: wear)
+        // Use the injected provider when present, else fall back to the
+        // Apple-platform default (HealthKit-backed via SynheartWear).
+        let provider: BiosignalProvider = providerOverride
+            ?? HealthKitBiosignalProvider(wear: SynheartWear())
         bioProvider = provider
         do {
             try provider.startStreaming { [weak self] sample in
