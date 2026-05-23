@@ -17,19 +17,25 @@ final class RuntimeBridge {
         let subjectId: String
         let sessionId: String
         let behaviorEnabled: Bool
+        /// Forwarded to the native runtime as `compute_profile.edge_mode`
+        /// (edge-tiering RFC §3.2). Drives the `session_role` stamped on
+        /// `meta.synheart.compute` of every emitted HSI envelope.
+        let edgeMode: EdgeMode
 
         init(
             windowMs: Int64 = 60_000,
             stepMs: Int64 = 5_000,
             subjectId: String,
             sessionId: String,
-            behaviorEnabled: Bool = false
+            behaviorEnabled: Bool = false,
+            edgeMode: EdgeMode = .canonical
         ) {
             self.windowMs = windowMs
             self.stepMs = stepMs
             self.subjectId = subjectId
             self.sessionId = sessionId
             self.behaviorEnabled = behaviorEnabled
+            self.edgeMode = edgeMode
         }
     }
 
@@ -47,12 +53,19 @@ final class RuntimeBridge {
     static func createIfAvailable(config: Config) -> RuntimeBridge? {
         guard RuntimeFFI.isAvailable else { return nil }
 
+        // Nested `compute_profile` is read by core-runtime/SynheartConfig
+        // (edge-tiering RFC §3.2) and shapes the `session_role` stamped on
+        // every emitted HSI envelope. Pre-RFC native runtimes ignore the
+        // extra key, so this is forward-compatible.
         let configJson: [String: Any] = [
             "window_ms": config.windowMs,
             "step_ms": config.stepMs,
             "subject_id": config.subjectId,
             "session_id": config.sessionId,
-            "behavior_enabled": config.behaviorEnabled
+            "behavior_enabled": config.behaviorEnabled,
+            "compute_profile": [
+                "edge_mode": config.edgeMode.wireValue
+            ]
         ]
 
         guard let jsonData = try? JSONSerialization.data(withJSONObject: configJson),

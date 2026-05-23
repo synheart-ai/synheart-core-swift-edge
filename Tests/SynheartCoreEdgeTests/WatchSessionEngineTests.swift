@@ -159,4 +159,54 @@ final class WatchSessionEngineTests: XCTestCase {
         XCTAssertNotNil(preset)
         XCTAssertEqual(preset?.mode, "nap")
     }
+
+    // MARK: - ComputeProfile.edgeMode (edge-tiering RFC §3.2)
+
+    func testComputeProfileDefaultsToCanonical() {
+        // Pre-RFC code paths constructed ComputeProfile() with no third arg.
+        // Default MUST stay canonical so back-compat callers behave as before.
+        let profile = ComputeProfile()
+        XCTAssertEqual(profile.edgeMode, .canonical)
+    }
+
+    func testEdgeModeWireFormIsSnakeCaseLowercase() {
+        // The Rust side (core-runtime SynheartConfig::from_value) parses these
+        // exact strings. Any drift breaks the producer-side `session_role`
+        // selection silently.
+        XCTAssertEqual(EdgeMode.off.wireValue, "off")
+        XCTAssertEqual(EdgeMode.shadow.wireValue, "shadow")
+        XCTAssertEqual(EdgeMode.canonical.wireValue, "canonical")
+    }
+
+    func testEdgeModeRoundTripsThroughFromPhoneCommandMap() {
+        // Phone-initiated sessions carry `profile.edge_mode` in the command
+        // map; ComputeProfile(from:) must parse the wire string back to the
+        // enum without surprises.
+        let map: [String: Any] = ["window_sec": 30, "emit_interval_sec": 3, "edge_mode": "shadow"]
+        let profile = ComputeProfile(from: map)
+        XCTAssertEqual(profile.windowSec, 30)
+        XCTAssertEqual(profile.emitIntervalSec, 3)
+        XCTAssertEqual(profile.edgeMode, .shadow)
+    }
+
+    func testEdgeModeUnknownWireStringFallsBackToCanonical() {
+        // Forward-compat: a future enum value we don't know about (or a typo)
+        // should not crash — it should fall through to canonical (current
+        // product-of-record default).
+        let map: [String: Any] = ["edge_mode": "tomorrows_unknown_mode"]
+        XCTAssertEqual(ComputeProfile(from: map).edgeMode, .canonical)
+    }
+
+    func testEdgeModeCodableRoundTrip() {
+        // ComputeProfile is Codable with CodingKeys to snake_case. Encoding
+        // then decoding should yield the same value, with the wire key
+        // `edge_mode` present in the JSON.
+        let profile = ComputeProfile(windowSec: 45, emitIntervalSec: 5, edgeMode: .shadow)
+        let data = try! JSONEncoder().encode(profile)
+        let json = String(data: data, encoding: .utf8) ?? ""
+        XCTAssertTrue(json.contains("\"edge_mode\":\"shadow\""), "JSON: \(json)")
+        let decoded = try! JSONDecoder().decode(ComputeProfile.self, from: data)
+        XCTAssertEqual(decoded.edgeMode, .shadow)
+        XCTAssertEqual(decoded.windowSec, 45)
+    }
 }

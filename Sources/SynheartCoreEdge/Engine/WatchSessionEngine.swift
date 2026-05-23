@@ -87,7 +87,8 @@ public final class WatchSessionEngine: ObservableObject {
             stepMs: Int64(config.profile.emitIntervalSec * 1000),
             subjectId: "sub_watch",
             sessionId: config.sessionId,
-            behaviorEnabled: false
+            behaviorEnabled: false,
+            edgeMode: config.profile.edgeMode
         ))
         let resolved = requestedMode ?? (runtime != nil ? .computeLocal : .stream)
         self.mode = resolved
