@@ -1,8 +1,6 @@
 import Foundation
 import Combine
 import SynheartSession
-import SynheartSessionHealthKit
-import SynheartWear
 
 /// Compute mode for an edge session.
 public enum EngineMode {
@@ -56,11 +54,14 @@ public final class WatchSessionEngine: ObservableObject {
     private var durationTimer: Timer?
     private var elapsedTimer: Timer?
     private var bioProvider: BiosignalProvider?
-    /// Optional injected provider — when nil the engine constructs a
-    /// `HealthKitBiosignalProvider(wear: SynheartWear())` at session
-    /// start (default Apple-platform path). Inject to swap in a BLE
-    /// chest-strap, a mock for tests, or any custom HR source.
-    private let providerOverride: BiosignalProvider?
+    /// Injected provider — required since 0.0.4. The engine no longer
+    /// constructs a `HealthKitBiosignalProvider` default, which removes
+    /// the transitive dependency on SynheartSessionHealthKit + SynheartWear
+    /// (and their grpc/protobuf transitive payload). Consumers wiring
+    /// HealthKit can build the same default themselves:
+    ///   `HealthKitBiosignalProvider(wear: SynheartWear())` (see
+    ///   synheart-session-swift / synheart-wear-swift).
+    private let provider: BiosignalProvider
     private let motionSensor: MotionSensor
     private var motionTask: Task<Void, Never>?
     /// Timestamp when the session entered `.paused`. Used by `resumeSession`
@@ -68,17 +69,17 @@ public final class WatchSessionEngine: ObservableObject {
     /// against elapsed/remaining.
     private var pausedAtMs: Int64 = 0
 
-    /// - Parameter provider: Optional. Pass a custom `BiosignalProvider`
-    ///   (BLE HRM, mock, etc.). When `nil` the engine defaults to
-    ///   `HealthKitBiosignalProvider(wear: SynheartWear())`, matching
-    ///   pre-0.0.3 behaviour. Mirrors the kotlin-edge SDK's
-    ///   `WatchSessionEngine(provider:, motionSensor:, ...)` shape so
-    ///   the two SDKs accept the same DI surface.
-    public init(provider: BiosignalProvider? = nil,
+    /// - Parameter provider: Required. The `BiosignalProvider` to read
+    ///   HR / RR / motion from (BLE HRM, HealthKit, mock for tests, etc.).
+    ///   See synheart-session-swift for the protocol and
+    ///   `HealthKitBiosignalProvider` for the Apple-platform default.
+    ///   Mirrors the kotlin-edge SDK's `WatchSessionEngine(provider:, …)`
+    ///   shape so the two SDKs accept the same DI surface.
+    public init(provider: BiosignalProvider,
                 motionSensor: MotionSensor = MotionSensor(),
                 outbox: EdgeOutbox = EdgeOutbox(),
                 sessionManager: EdgeSessionManager? = nil) {
-        self.providerOverride = provider
+        self.provider = provider
         self.motionSensor = motionSensor
         self.outbox = outbox
         self.sessionManager = sessionManager
@@ -221,10 +222,6 @@ public final class WatchSessionEngine: ObservableObject {
     }
 
     private func startBiosignalProvider() {
-        // Use the injected provider when present, else fall back to the
-        // Apple-platform default (HealthKit-backed via SynheartWear).
-        let provider: BiosignalProvider = providerOverride
-            ?? HealthKitBiosignalProvider(wear: SynheartWear())
         bioProvider = provider
         do {
             try provider.startStreaming { [weak self] sample in

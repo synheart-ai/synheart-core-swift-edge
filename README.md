@@ -2,7 +2,7 @@
 
 Light Synheart Core SDK for **watchOS / Apple Watch**. The full [`synheart-core-swift`](https://github.com/synheart-ai/synheart-core-swift) SDK is too heavy for a watch — this package ships the minimum needed to run an on-device session and relay results to a paired iPhone.
 
-**Status:** `0.0.3` — public API. Mirrors [`synheart-core-kotlin-edge`](https://github.com/synheart-ai/synheart-core-kotlin-edge) one-for-one (same engine surface, same state machine, same model types). See [docs.synheart.ai/synheart-core/edge](https://docs.synheart.ai/synheart-core/edge) for the cross-platform guide.
+**Status:** `0.0.4` — public API. Mirrors [`synheart-core-kotlin-edge`](https://github.com/synheart-ai/synheart-core-kotlin-edge) one-for-one (same engine surface, same state machine, same model types). See [docs.synheart.ai/synheart-core/edge](https://docs.synheart.ai/synheart-core/edge) for the cross-platform guide.
 
 ## Scope
 
@@ -25,7 +25,7 @@ What's out (ships in `synheart-core-swift`, not here):
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/synheart-ai/synheart-core-swift-edge.git", from: "0.0.3"),
+    .package(url: "https://github.com/synheart-ai/synheart-core-swift-edge.git", from: "0.0.4"),
 ],
 targets: [
     .target(name: "MyWatchApp", dependencies: [

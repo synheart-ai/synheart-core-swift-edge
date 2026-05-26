@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-05-26
+
+### Changed (breaking)
+- `WatchSessionEngine.init(provider:…)` — the `provider` parameter is now
+  **required** (previously defaulted to `HealthKitBiosignalProvider(wear:
+  SynheartWear())`). Removing the default lets us drop
+  `SynheartSessionHealthKit` + the transitive `SynheartWear` SwiftPM
+  dependency, which pulled grpc-swift + swift-protobuf + the full
+  vendor-provider stack into every consumer binary — bloat that a
+  lightweight watchOS SDK has no business carrying.
+
+  **Migration:** consumers that were relying on the HealthKit default
+  now construct it themselves and inject it:
+
+  ```swift
+  import SynheartSessionHealthKit
+  import SynheartWear
+
+  let engine = WatchSessionEngine(
+      provider: HealthKitBiosignalProvider(wear: SynheartWear()),
+      // … (other args unchanged)
+  )
+  ```
+
+  BLE / mock / custom providers are unaffected — they were already
+  passed explicitly.
+
+### Removed
+- SwiftPM dep on `SynheartSessionHealthKit` (and transitively on
+  `synheart-wear-swift`). Edge now depends only on `SynheartSession`
+  (the BiosignalProvider protocol).
+
 ## [0.0.1] - 2026-05-07
 
 Initial release. Watch-side SDK for Apple Watch / watchOS, extracted from

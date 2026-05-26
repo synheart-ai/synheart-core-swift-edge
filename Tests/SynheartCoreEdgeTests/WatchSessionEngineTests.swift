@@ -5,6 +5,7 @@ final class WatchSessionEngineTests: XCTestCase {
 
     private func makeEngine() -> WatchSessionEngine {
         WatchSessionEngine(
+            provider: MockBiosignalProvider(),
             outbox: EdgeOutbox(),
             sessionManager: EdgeSessionManager()
         )

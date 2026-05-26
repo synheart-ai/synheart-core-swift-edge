@@ -12,17 +12,16 @@ let package = Package(
         .library(name: "SynheartCoreEdge", targets: ["SynheartCoreEdge"]),
     ],
     dependencies: [
-        // Session lifecycle + biosignal provider abstraction. Pulls
-        // SynheartSession (core) + SynheartSessionHealthKit (Apple Watch /
-        // iPhone HealthKit-backed BiosignalProvider).
-        // Transitively pulls synheart-wear-swift.
+        // Only SynheartSession's BiosignalProvider protocol. Since 0.0.4 the
+        // engine requires the consumer to inject a provider, so we no longer
+        // pull SynheartSessionHealthKit + SynheartWear (and their grpc /
+        // protobuf transitive payload) for a watchOS SDK that runs neither.
         //
-        // URL-based so this SDK is consumable by external apps via SwiftPM
-        // (a path dep here would error with "package … depends on local
-        // package … which is not supported" the moment a remote consumer
-        // tries to resolve us). synheart-session-swift is pre-1.0; we pin
-        // via `from: "0.2.1"` and rely on its 0.2.x line staying compatible
-        // until we both tag stable.
+        // Consumers wiring HealthKit on Apple platforms build the previous
+        // default themselves:
+        //   HealthKitBiosignalProvider(wear: SynheartWear())
+        // pulled from synheart-session-swift / synheart-wear-swift in the
+        // consumer's Package.swift.
         .package(url: "https://github.com/synheart-ai/synheart-session-swift.git", from: "0.2.1"),
         // synheart-core-runtime itself is loaded via dlsym in RuntimeBridge.swift;
         // no SwiftPM dependency declared.
@@ -32,7 +31,6 @@ let package = Package(
             name: "SynheartCoreEdge",
             dependencies: [
                 .product(name: "SynheartSession", package: "synheart-session-swift"),
-                .product(name: "SynheartSessionHealthKit", package: "synheart-session-swift"),
             ],
             path: "Sources/SynheartCoreEdge"
         ),
