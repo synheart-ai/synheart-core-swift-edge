@@ -22,6 +22,8 @@ What's out (ships in `synheart-core-swift`, not here):
 
 ## Install
 
+### Swift Package Manager (recommended)
+
 ```swift
 // Package.swift
 dependencies: [
@@ -33,6 +35,18 @@ targets: [
     ]),
 ]
 ```
+
+### CocoaPods
+
+```ruby
+# Podfile
+pod 'SynheartCoreEdge', :git => 'https://github.com/synheart-ai/synheart-core-swift-edge.git', :tag => 'v0.0.4'
+pod 'SynheartSession',  :git => 'https://github.com/synheart-ai/synheart-session-swift.git',  :tag => 'v0.2.1'
+```
+
+Pod consumers must also declare `SynheartSession` (the `BiosignalProvider`
+protocol). The two pods carry their own podspecs in their repos; we don't
+publish to CocoaPods Trunk — git refs only.
 
 Platforms: watchOS 9.0+, iOS 15.0+, macOS 13.0+.
 
