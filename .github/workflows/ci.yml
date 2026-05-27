@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build-test:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build
+        run: swift build -v
+
+      - name: Test
+        run: |
+          if [ -d "Tests" ]; then
+            swift test -v
+          else
+            echo "No Tests directory found, skipping"
+          fi
+
+  lint:
+    name: Lint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: SwiftLint
+        run: |
+          if [ -f ".swiftlint.yml" ]; then
+            swiftlint --strict
+          else
+            echo "No .swiftlint.yml — skipping"
+          fi

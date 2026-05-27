@@ -1,0 +1,44 @@
+# Tag-driven release for SwiftPM packages.
+#
+# SwiftPM consumers resolve directly from the git tag — no package registry
+# upload is required. This workflow:
+#   1. Validates the tagged commit builds and tests pass
+#   2. Creates a GitHub Release with auto-generated notes
+#   3. (Optional) Pings the Swift Package Index to refresh
+#
+# The package becomes installable as soon as the tag is pushed; this workflow
+# just adds release-note hygiene and a consistency gate.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+      - name: Build
+        run: swift build -c release
+      - name: Test
+        run: swift test
+
+  release:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
