@@ -5,7 +5,7 @@ import Foundation
 
 /// How the watch's edge HSI should be reported relative to a paired phone.
 /// The `rawValue` IS the wire string (lowercase) the native runtime config
-/// reads. See docs/EDGE-WIRE-CONTRACT.md.
+/// reads. See the Synheart Edge wire contract (EDGE-WIRE-CONTRACT.md in the synheart-edge repo).
 public enum EdgeMode: String {
     /// Edge runtime does not start. Watch streams raw samples to phone.
     case off

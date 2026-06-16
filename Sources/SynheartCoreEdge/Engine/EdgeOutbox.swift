@@ -5,7 +5,7 @@ import Foundation
 
 /// Durable artifact outbox.
 /// File-based persistence. Survives restart. Deletes on ACK.
-/// See docs/EDGE-WIRE-CONTRACT.md for the ACK + dedupe behaviour.
+/// See the Synheart Edge wire contract (EDGE-WIRE-CONTRACT.md in the synheart-edge repo) for the ACK + dedupe behaviour.
 ///
 /// ## Storage & protection
 /// Files live under Application Support (not user-visible Documents) and are

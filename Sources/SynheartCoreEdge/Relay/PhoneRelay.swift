@@ -8,7 +8,7 @@ import SynheartSession
 import WatchConnectivity
 
 /// Watch-side WCSession relay with outbox integration and an edge-session sync
-/// flow. Wire message shapes follow docs/EDGE-WIRE-CONTRACT.md.
+/// flow. Wire message shapes follow EDGE-WIRE-CONTRACT.md in the synheart-edge repo.
 public final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
 
     /// Default `UserDefaults` key the cached presets are stored under.
@@ -96,7 +96,7 @@ public final class PhoneRelay: NSObject, WCSessionDelegate, ObservableObject {
     /// Send a real-time HR sample to the phone. Builds the canonical wire body
     /// `{ "type":"hr_sample", "bpm":<Double>, "timestamp_ms":<Int64>,
     /// "source":<String?> }`. Owning the shape here keeps the call site from
-    /// drifting (e.g. bare `timestamp`). See docs/EDGE-WIRE-CONTRACT.md.
+    /// drifting (e.g. bare `timestamp`). See the Synheart Edge wire contract (EDGE-WIRE-CONTRACT.md in the synheart-edge repo).
     public func sendHrSample(bpm: Double, timestampMs: Int64, source: String? = nil) {
         guard WCSession.default.isReachable else { return }
         var message: [String: Any] = [

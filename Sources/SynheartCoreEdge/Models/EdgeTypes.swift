@@ -5,7 +5,7 @@ import Foundation
 import CryptoKit
 
 // NOTE: The string raw values and JSON keys in this file are the canonical
-// watch↔phone wire protocol (see docs/EDGE-WIRE-CONTRACT.md). The phone-side
+// watch↔phone wire protocol (see EDGE-WIRE-CONTRACT.md in the synheart-edge repo). The phone-side
 // EdgeIngest receiver and both reference watch apps depend on these exact
 // values. Do NOT change them. A white-label fork that renames the protocol
 // namespace must change it consistently across all producers and consumers.
@@ -32,7 +32,7 @@ public enum SessionKind: String, Codable, CaseIterable {
     case deepWork = "DEEP_WORK"
 }
 
-/// HSI artifact envelope (see docs/EDGE-WIRE-CONTRACT.md).
+/// HSI artifact envelope (see EDGE-WIRE-CONTRACT.md in the synheart-edge repo).
 public struct HsiArtifactEnvelope: Codable {
     public let artifactId: String
     public let sessionId: String

@@ -13,7 +13,7 @@ import Foundation
 /// from the body and invokes `onStart`; `stop_session` invokes `onStop`. The
 /// caller (``PhoneRelay``) supplies handlers for the sync/ack/preset commands
 /// since those need its WCSession-bound state. Command verbs are part of the
-/// canonical wire protocol (see docs/EDGE-WIRE-CONTRACT.md).
+/// canonical wire protocol (see EDGE-WIRE-CONTRACT.md in the synheart-edge repo).
 enum PhoneCommandRouter {
 
     /// The set of recognised command verbs.

@@ -5,7 +5,7 @@ import Foundation
 
 /// Events sent from watch to phone (and phone to watch for ACKs/sync).
 /// Message `type` values and JSON keys are part of the canonical wire protocol
-/// (see docs/EDGE-WIRE-CONTRACT.md).
+/// (see EDGE-WIRE-CONTRACT.md in the synheart-edge repo).
 public enum SessionEvent {
     case started(sessionId: String, startedAtMs: Int64)
     case frame(sessionId: String, seq: Int, emittedAtMs: Int64, metrics: [String: Any])
