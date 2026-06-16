@@ -1,28 +1,55 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) Synheart authors
+
 import Foundation
 
-/// RFC §4.2 — Manages standalone edge sessions.
+/// Manages standalone edge sessions.
 /// Creates edge session IDs, tracks manifests, manages local session storage.
 public final class EdgeSessionManager {
     private let sessionsDir: URL
     private let deviceId: String
 
-    public init() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        self.sessionsDir = docs.appendingPathComponent("edge_sessions", isDirectory: true)
-        try? FileManager.default.createDirectory(at: sessionsDir, withIntermediateDirectories: true)
+    /// Default `UserDefaults` key for the persisted per-device opaque id.
+    public static let defaultDeviceKey = "synheart_device_opaque"
+
+    /// - Parameters:
+    ///   - defaults: backing store for the persisted per-device opaque id.
+    ///     Defaults to `.standard`. Pass an app-specific suite
+    ///     (`UserDefaults(suiteName:)`) so two SDK-based apps on one device do
+    ///     not collide on the shared key namespace.
+    ///   - deviceKey: key the opaque id is stored under. Defaults to
+    ///     ``defaultDeviceKey`` (`"synheart_device_opaque"`); override (or
+    ///     prefix) it for additional namespacing within a shared suite.
+    public init(defaults: UserDefaults = .standard,
+                deviceKey: String = EdgeSessionManager.defaultDeviceKey) {
+        // Manifests live under Application Support (not user-visible
+        // Documents) with complete-unless-open file protection (encrypted at
+        // rest while the device is locked). The on-disk JSON shape is unchanged.
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        self.sessionsDir = base.appendingPathComponent("edge_sessions", isDirectory: true)
+        try? FileManager.default.createDirectory(
+            at: sessionsDir,
+            withIntermediateDirectories: true,
+            attributes: [.protectionKey: FileProtectionType.completeUnlessOpen]
+        )
 
         // Stable device identifier (persisted)
-        let key = "synheart_device_opaque"
-        if let existing = UserDefaults.standard.string(forKey: key) {
+        if let existing = defaults.string(forKey: deviceKey) {
             self.deviceId = existing
         } else {
             let id = UUID().uuidString.lowercased().prefix(8)
-            UserDefaults.standard.set(String(id), forKey: key)
+            defaults.set(String(id), forKey: deviceKey)
             self.deviceId = String(id)
         }
     }
 
-    /// Generate an edge session ID per RFC §4.2.1.
+    /// Stable, per-device opaque id used as the runtime `subject_id` for edge
+    /// personalization. Reuses the same persisted device-opaque value that seeds
+    /// `generateSessionId`, so runtime personalization is keyed to this physical
+    /// device. Of the form `"sub_<deviceOpaque>"`.
+    public var subjectId: String { "sub_\(deviceId)" }
+
+    /// Generate an edge session ID.
     /// Format: edge_w_<deviceOpaque>_<timestamp>_<random>
     public func generateSessionId() -> String {
         let ts = Int64(Date().timeIntervalSince1970)
@@ -30,7 +57,7 @@ public final class EdgeSessionManager {
         return "edge_w_\(deviceId)_\(ts)_\(rand)"
     }
 
-    /// Session manifest per RFC §4.2.2.
+    /// Session manifest persisted per standalone edge session.
     public struct SessionManifest: Codable {
         public let sessionId: String
         public let kind: SessionKind
@@ -91,7 +118,7 @@ public final class EdgeSessionManager {
         saveManifest(manifest)
     }
 
-    /// Build a sync manifest message per RFC §5.1 Step 1.
+    /// Build a sync manifest message (first step of the edge-session sync flow).
     public func buildSyncManifest(for manifest: SessionManifest) -> [String: Any] {
         var msg: [String: Any] = [
             "type": "edge_session_manifest",
@@ -117,7 +144,8 @@ public final class EdgeSessionManager {
         try? FileManager.default.createDirectory(at: sessionDir, withIntermediateDirectories: true)
         let file = sessionDir.appendingPathComponent("manifest.json")
         if let data = try? JSONEncoder().encode(manifest) {
-            try? data.write(to: file, options: .atomic)
+            // Atomic + encrypted-at-rest write.
+            try? data.write(to: file, options: [.atomic, .completeFileProtectionUnlessOpen])
         }
     }
 

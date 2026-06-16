@@ -1,13 +1,18 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) Synheart authors
+
 import Foundation
 
 /// Events sent from watch to phone (and phone to watch for ACKs/sync).
+/// Message `type` values and JSON keys are part of the canonical wire protocol
+/// (see docs/EDGE-WIRE-CONTRACT.md).
 public enum SessionEvent {
     case started(sessionId: String, startedAtMs: Int64)
     case frame(sessionId: String, seq: Int, emittedAtMs: Int64, metrics: [String: Any])
     case artifact(envelope: HsiArtifactEnvelope)
     case summary(sessionId: String, durationActualSec: Int, metrics: [String: Any])
     case error(sessionId: String, code: String, message: String)
-    // Sync protocol events (RFC §5)
+    // Sync protocol events
     case edgeSessionManifest(manifest: [String: Any])
     case artifactBatch(sessionId: String, envelopes: [HsiArtifactEnvelope])
     // ACK from phone

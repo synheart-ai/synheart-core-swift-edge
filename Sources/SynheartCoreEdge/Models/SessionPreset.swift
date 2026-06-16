@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) Synheart authors
+
 import Foundation
 
 /// A session preset — either synced from phone or built-in for standalone use.
@@ -63,7 +66,7 @@ public struct SessionPreset: Codable, Identifiable {
         )
     }
 
-    /// Create a standalone edge SessionConfig (RFC §4.2).
+    /// Create a standalone edge SessionConfig.
     public func toEdgeSessionConfig(sessionManager: EdgeSessionManager) -> SessionConfig {
         SessionConfig(
             sessionId: sessionManager.generateSessionId(),

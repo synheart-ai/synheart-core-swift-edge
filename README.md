@@ -2,14 +2,14 @@
 
 Light Synheart Core SDK for **watchOS / Apple Watch**. The full [`synheart-core-swift`](https://github.com/synheart-ai/synheart-core-swift) SDK is too heavy for a watch — this package ships the minimum needed to run an on-device session and relay results to a paired iPhone.
 
-**Status:** `0.0.4` — public API. Mirrors [`synheart-core-kotlin-edge`](https://github.com/synheart-ai/synheart-core-kotlin-edge) one-for-one (same engine surface, same state machine, same model types). See [docs.synheart.ai/synheart-core/edge](https://docs.synheart.ai/synheart-core/edge) for the cross-platform guide.
+**Status:** `0.0.5` — public API.
 
 ## Scope
 
 What's in:
 
-- **Engine** — `WatchSessionEngine`, `EdgeSessionManager`, `EdgeOutbox`, `RuntimeBridge`, `WatchSessionState`
-- **Sensors** — `MotionSensor` (CoreMotion). HR comes from a `BiosignalProvider` (defaults to `HealthKitBiosignalProvider` from [synheart-session-swift](https://github.com/synheart-ai/synheart-session-swift); injectable)
+- **Engine** — `WatchSessionEngine`, `EdgeSessionManager`, `EdgeOutbox`, `WatchSessionState`
+- **Sensors** — `MotionSensor` (CoreMotion). HR comes from a `BiosignalProvider` you inject (e.g. `HealthKitBiosignalProvider` from [synheart-session-swift](https://github.com/synheart-ai/synheart-session-swift), a BLE HRM, or a mock)
 - **Relay** — `PhoneRelay` (WCSession to paired iPhone)
 - **Models** — `SessionConfig`, `SessionPreset`, `ComputeProfile`, `SessionEvent`, `EdgeTypes`
 
@@ -27,7 +27,7 @@ What's out (ships in `synheart-core-swift`, not here):
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/synheart-ai/synheart-core-swift-edge.git", from: "0.0.4"),
+    .package(url: "https://github.com/synheart-ai/synheart-core-swift-edge.git", from: "0.0.5"),
 ],
 targets: [
     .target(name: "MyWatchApp", dependencies: [
@@ -40,7 +40,7 @@ targets: [
 
 ```ruby
 # Podfile
-pod 'SynheartCoreEdge', :git => 'https://github.com/synheart-ai/synheart-core-swift-edge.git', :tag => 'v0.0.4'
+pod 'SynheartCoreEdge', :git => 'https://github.com/synheart-ai/synheart-core-swift-edge.git', :tag => 'v0.0.5'
 pod 'SynheartSession',  :git => 'https://github.com/synheart-ai/synheart-session-swift.git',  :tag => 'v0.2.1'
 ```
 
@@ -59,6 +59,7 @@ import SynheartCoreEdge
 @main
 struct MyWatchApp: App {
     @StateObject private var engine = WatchSessionEngine(
+        provider: HealthKitBiosignalProvider(wear: SynheartWear()),
         outbox: EdgeOutbox(),
         sessionManager: EdgeSessionManager()
     )
@@ -66,14 +67,14 @@ struct MyWatchApp: App {
     var body: some Scene {
         WindowGroup {
             Button("Start") {
-                engine.startSession(config: .focusDefault())
+                engine.startEdgeSession(preset: SessionPreset.defaults[0])
             }
         }
     }
 }
 ```
 
-Swap the default `HealthKitBiosignalProvider` for a custom HR source (BLE chest-strap, mock, etc.):
+Swap the provider for a custom HR source (BLE chest-strap, mock, etc.):
 
 ```swift
 let engine = WatchSessionEngine(
@@ -86,7 +87,7 @@ let engine = WatchSessionEngine(
 ## Architecture
 
 ```
-sensors  →  WatchSessionEngine  →  RuntimeBridge (dlsym) → synheart-core-runtime
+sensors  →  WatchSessionEngine  →  native FFI bridge (dlsym) → synheart-core-runtime
                   │
                   ├──→  EdgeOutbox    (local artifact persistence)
                   └──→  PhoneRelay    (relay to iPhone via WCSession)
@@ -109,13 +110,11 @@ engine.acknowledgeArtifacts(ids: [...])      // after phone confirms relay recei
 
 State: `.idle | .starting | .running | .paused | .stopping | .syncing | .error`
 
-Observable: `currentHr`, `state`, `elapsedSec`, `remainingSec`, `pendingArtifacts`, `lastMetrics`.
+Observable: `currentHr`, `state`, `elapsedSec`, `remainingSec`, `pendingArtifactCount`, `droppedFrames`, `lastMetrics`.
 Callbacks: `onHrSample`, `onBiosignalSample`, `onEvent`.
 
 ## See also
 
-- **Cross-platform guide:** [docs.synheart.ai/synheart-core/edge](https://docs.synheart.ai/synheart-core/edge)
-- **Kotlin parallel:** [synheart-core-kotlin-edge](https://github.com/synheart-ai/synheart-core-kotlin-edge)
 - **Reference watch app:** [synheart-edge-watch-ios](https://github.com/synheart-ai/synheart-edge-watch-ios)
 
 ## License

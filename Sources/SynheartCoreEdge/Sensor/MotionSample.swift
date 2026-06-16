@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) Synheart authors
+
 import Foundation
 
 /// A single accelerometer sample from the watch motion sensor.

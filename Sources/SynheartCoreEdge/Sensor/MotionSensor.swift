@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) Synheart authors
+
 import Foundation
 
 #if canImport(CoreMotion) && !os(macOS)
@@ -9,6 +12,14 @@ public final class MotionSensor {
     private let motionManager = CMMotionManager()
     private let queue = OperationQueue()
     private var continuation: AsyncThrowingStream<MotionSample, Error>.Continuation?
+
+    /// Epoch (ms) corresponding to device boot, used to convert a
+    /// `CMAccelerometerData.timestamp` (seconds since boot, NOT wall-clock) into
+    /// epoch-ms so the accel timeline aligns with HR/RR samples. Captured once at
+    /// stream start: `bootEpoch = now − systemUptime`. CoreMotion timestamps are
+    /// monotonic device-uptime, so adding the sample's `timestamp` reconstructs
+    /// the actual capture instant rather than the (later, jittery) delivery time.
+    private var bootEpochMs: Double = 0
 
     public init() {}
 
@@ -35,15 +46,22 @@ public final class MotionSensor {
 
             self.motionManager.accelerometerUpdateInterval = 1.0 / 25.0  // 25 Hz
 
-            self.motionManager.startAccelerometerUpdates(to: self.queue) { data, error in
+            // Anchor device-uptime timestamps to wall-clock once at stream start.
+            self.bootEpochMs = (Date().timeIntervalSince1970 - ProcessInfo.processInfo.systemUptime) * 1000
+
+            self.motionManager.startAccelerometerUpdates(to: self.queue) { [weak self] data, error in
+                guard let self = self else { return }
                 if let error = error {
                     continuation.finish(throwing: error)
                     return
                 }
                 guard let data = data else { return }
 
+                // Use the SAMPLE's CoreMotion timestamp (device-uptime seconds),
+                // not Date() at delivery, so accel aligns with the HR/RR timeline.
+                let tsMs = Int64((self.bootEpochMs + data.timestamp * 1000).rounded())
                 let sample = MotionSample(
-                    timestampMs: Int64(Date().timeIntervalSince1970 * 1000),
+                    timestampMs: tsMs,
                     x: data.acceleration.x,  // already in g-force
                     y: data.acceleration.y,
                     z: data.acceleration.z
