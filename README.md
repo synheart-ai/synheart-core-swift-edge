@@ -1,8 +1,15 @@
-# SynheartCoreEdge (Swift)
+# Synheart Core Edge SDK — Swift
 
-Light Synheart Core SDK for **watchOS / Apple Watch**. The full [`synheart-core-swift`](https://github.com/synheart-ai/synheart-core-swift) SDK is too heavy for a watch — this package ships the minimum needed to run an on-device session and relay results to a paired iPhone.
+[![Version](https://img.shields.io/badge/version-0.0.5-blue.svg)](https://github.com/synheart-ai/synheart-core-swift-edge)
+[![Swift](https://img.shields.io/badge/Swift-5.9%2B-FA7343.svg)](https://swift.org)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-**Status:** `0.0.5` — public API.
+> **Source-available.** This repository is open for reading, auditing, and
+> filing issues. We do **not** accept pull requests — see
+> [CONTRIBUTING.md](CONTRIBUTING.md) for the rationale and how to contribute
+> via issues. Security reports go through [SECURITY.md](SECURITY.md).
+
+Light Synheart Core SDK for **watchOS / Apple Watch** — the minimum needed to run an on-device session and relay results to a paired iPhone. The full [`synheart-core-swift`](https://github.com/synheart-ai/synheart-core-swift) SDK is too heavy for a watch. See [docs.synheart.ai/synheart-core/edge](https://docs.synheart.ai/synheart-core/edge) for the cross-platform guide.
 
 ## Scope
 
