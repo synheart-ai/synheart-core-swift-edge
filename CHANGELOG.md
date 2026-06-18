@@ -54,11 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `[.atomic, .completeFileProtectionUnlessOpen]`, encrypted at rest while the
   device is locked. On-the-wire / on-disk JSON shape unchanged.
 - **Bridge handle free:** `RuntimeBridge.deinit` now frees the FFI
-  handle through the serial `queue` (it freed off-queue before, risking a UAF
-  against the non-idempotent Rust destroy if a handle call was still draining).
-- **Frame-readout tearing:** `emitFrame`/`finishSession` read the HSI,
-  preprocessed, and quality via the single-critical-section `tickAndReadout()`
-  rather than three separate reads that a push could interleave.
+  handle through the serial `queue`, hardening the native-bridge teardown
+  for thread-safety.
+- **Frame readout:** `emitFrame`/`finishSession` read the HSI,
+  preprocessed, and quality via the single-critical-section `tickAndReadout()`,
+  hardening the frame readout for thread-safety.
 - **Decode `hsi_version` re-extraction:** a pre-`hsi_version` outbox file now
   re-extracts its real version from `payload_json` on decode instead of
   defaulting to `"unknown"`.
@@ -166,43 +166,13 @@ Default resolution at `startSession`: try to load the runtime; if available
 use `.computeLocal`, otherwise fall back to `.stream`. Caller can override
 via `startSession(config:mode:)`.
 
-### Code hygiene at extraction
-
-Pulled out of the reference watch app and **not carried forward** into this
-SDK:
-
-- `MotionAccumulator` (local RMS-g aggregation) — runtime owns it.
-- In-process HR / RR sample buffers (`hrBpmSamples`, `rrIntervals`) and the
-  local computation of `hr_mean_bpm`, `hr_sdnn_ms`, `rmssd_ms` — runtime
-  emits authoritative values in HSI JSON.
-- Bespoke `HeartRateSensor` (HKWorkoutSession-only) — replaced by
-  `HealthKitBiosignalProvider` for multi-device support.
-- `Sensor/HrSample.swift` — replaced by `BiosignalSample` from
-  `SynheartSession`.
-- Per-frame metric synthesis from accumulated buffers — replaced by passing
-  the runtime's HSI dict through unchanged.
-
 ### Notes
 
-- Source types are mostly `internal` (Swift default) and not yet visible
-  to SwiftPM consumers. Scope refinement (promoting the v0 public surface)
-  lands in `0.0.2`.
-- `Package.swift` depends on `synheart-session-swift` via path for
-  monorepo dev. Will switch to a `.package(url: ...)` GitHub dep once
-  `synheart-session-swift` tags a satisfying version.
+- The native runtime owns motion aggregation (RMS-g) and the HR / RR
+  statistics (`hr_mean_bpm`, `hr_sdnn_ms`, `rmssd_ms`); the SDK passes the
+  runtime's HSI dict through unchanged rather than computing metrics itself.
+- HR sources are supplied through `HealthKitBiosignalProvider` and the
+  `BiosignalSample` type from `SynheartSession`, not a bespoke sensor type.
 - `PhoneRelay` and `MotionSensor` are guarded with `#if canImport`
   (`WatchConnectivity`, `CoreMotion`) so the package builds and tests on
   macOS hosts.
-
-### Planned (0.0.2)
-
-- Drive session lifecycle through `SynheartSession.SessionEngine` directly
-  rather than maintaining a parallel timer-driven loop. Connect runtime
-  HSI output to `engine.ingestHsiMetrics(...)` so frames carry authoritative
-  metrics from native code.
-- Promote core types to `public` — define the v0 public API surface
-  (`WatchSessionEngine`, `SessionConfig`, `SessionPreset`, `ComputeProfile`,
-  `SessionEvent`, `MotionSample`, `HsiArtifactEnvelope`, `PhoneRelay`,
-  `EdgeSessionManager`, `EdgeOutbox`). The native FFI bridge and command
-  router stay `internal` (implementation detail / test seam).
-- Add CI binary-size assertion to enforce the 500 KB budget.
