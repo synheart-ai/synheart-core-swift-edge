@@ -23,7 +23,7 @@ let package = Package(
         // pulled from synheart-session-swift / synheart-wear-swift in the
         // consumer's Package.swift.
         .package(url: "https://github.com/synheart-ai/synheart-session-swift.git", from: "0.2.1"),
-        // synheart-core-runtime itself is loaded via dlsym in RuntimeBridge.swift;
+        // the native edge runtime itself is loaded via dlsym in RuntimeBridge.swift;
         // no SwiftPM dependency declared.
     ],
     targets: [

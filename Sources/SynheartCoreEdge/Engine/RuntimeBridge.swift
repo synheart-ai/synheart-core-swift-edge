@@ -51,14 +51,13 @@ extension RuntimeHandle {
     var droppedFrames: Int64 { 0 }
 }
 
-/// Bridge to the synheart-core-runtime edge pipeline via C ABI.
+/// Bridge to the native edge runtime pipeline via C ABI.
 ///
 /// dlsym-based dynamic loading. When the native library is not linked,
 /// `createIfAvailable()` returns nil and the caller falls back gracefully.
 ///
-/// Build the static library with:
-///   cargo +nightly build --release --target aarch64-apple-watchos \
-///     -p synheart-core-runtime --features edge
+/// Built from the Synheart native runtime (edge feature) as a static library
+/// for the watchOS target.
 ///
 /// ## Thread confinement
 /// The native runtime serializes handle access with a `try_lock` and silently

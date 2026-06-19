@@ -10,7 +10,7 @@ public enum EngineMode {
     /// Watch is a dumb sensor: raw samples are surfaced via callbacks for the
     /// host app to relay to the paired phone. The on-device runtime is not used.
     case stream
-    /// `synheart-core-runtime` runs locally; raw samples are pushed to FFI and
+    /// the native edge runtime runs locally; raw samples are pushed to FFI and
     /// HSI artifacts emitted by the runtime are persisted + relayed.
     case computeLocal
 }
@@ -118,7 +118,7 @@ public final class WatchSessionEngine: ObservableObject {
     // MARK: - Lifecycle
 
     /// Start a session. If `mode` is nil the engine resolves it: try to load
-    /// `synheart-core-runtime` — if available, run `.computeLocal`; otherwise
+    /// the native edge runtime — if available, run `.computeLocal`; otherwise
     /// fall back to `.stream` (raw samples surfaced via `onBiosignalSample`).
     public func startSession(config: SessionConfig, mode requestedMode: EngineMode? = nil) {
         guard state.canTransition(to: .starting) else { return }
