@@ -131,7 +131,7 @@ and recomposed against the same sibling SDKs the phone SDK depends on.
 
 ### Architecture
 
-This SDK is a **thin FFI wrapper** around `synheart-core-runtime`. All math
+This SDK is a **thin FFI wrapper** around the native edge runtime. All math
 and signal derivation runs in the native runtime, not in Swift. The watch
 SDK is just: sensor capture → push raw samples (`pushHr` / `pushRr` /
 `pushAccel`) to runtime → outbox runtime-emitted artifacts → relay to phone.
@@ -148,7 +148,7 @@ SDK is just: sensor capture → push raw samples (`pushHr` / `pushRr` /
 - **Session lifecycle** is owned by `WatchSessionEngine` (state machine,
   timers, outbox). A future release will move lifecycle ownership into
   `SynheartSession.SessionEngine` directly.
-- **Native runtime** (`synheart-core-runtime`) is dlopen'd at runtime via
+- **Native edge runtime** is dlopen'd at runtime via
   `RuntimeBridge`; no SwiftPM dependency declared. Apps must bundle the
   static library.
 
@@ -158,7 +158,7 @@ SDK is just: sensor capture → push raw samples (`pushHr` / `pushRr` /
 
 - `.stream` — raw `BiosignalSample`s are surfaced via `onBiosignalSample`
   for the host app to relay to the paired phone. Runtime not loaded.
-- `.computeLocal` — raw samples piped to `synheart-core-runtime` via FFI;
+- `.computeLocal` — raw samples piped to the native edge runtime via FFI;
   HSI artifacts emitted by the runtime are persisted into `EdgeOutbox` and
   relayed to phone.
 

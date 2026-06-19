@@ -94,7 +94,7 @@ let engine = WatchSessionEngine(
 ## Architecture
 
 ```
-sensors  →  WatchSessionEngine  →  native FFI bridge (dlsym) → synheart-core-runtime
+sensors  →  WatchSessionEngine  →  native FFI bridge (dlsym) → native edge runtime
                   │
                   ├──→  EdgeOutbox    (local artifact persistence)
                   └──→  PhoneRelay    (relay to iPhone via WCSession)
