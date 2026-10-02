@@ -185,7 +185,15 @@ public final class WatchSessionEngine: ObservableObject {
         }
 
         // Emit started
-        let event = SessionEvent.started(sessionId: config.sessionId, startedAtMs: startedAtMs)
+        let event = SessionEvent.started(
+            sessionId: config.sessionId,
+            startedAtMs: startedAtMs,
+            start: SessionStartFacts(
+                origin: config.origin,
+                kind: config.kind,
+                durationTargetSec: config.durationSec
+            )
+        )
         onEvent?(event)
 
         transition(to: .running)
@@ -528,7 +536,12 @@ public final class WatchSessionEngine: ObservableObject {
         let event = SessionEvent.summary(
             sessionId: config.sessionId,
             durationActualSec: durationActual,
-            metrics: metrics
+            metrics: metrics,
+            start: SessionStartFacts(
+                origin: config.origin,
+                kind: config.kind,
+                durationTargetSec: config.durationSec
+            )
         )
         onEvent?(event)
 
