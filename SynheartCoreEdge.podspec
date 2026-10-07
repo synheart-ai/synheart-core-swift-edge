@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "SynheartCoreEdge"
-  s.version      = "0.0.5"
+  s.version      = "0.0.6"
   s.summary      = "Lightweight Synheart Core SDK for watchOS / Apple Watch."
   s.description  = <<-DESC
     On-watch session engine + phone relay for the Synheart platform.
