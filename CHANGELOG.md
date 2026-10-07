@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-10-07
+
+### Added
+- `SessionStartFacts` (origin, kind, duration target) and an optional
+  `start: SessionStartFacts?` on `SessionEvent.started` and
+  `SessionEvent.summary`, filled by `WatchSessionEngine` from the session's
+  `SessionConfig`. Written to the wire as `origin`, `kind` and
+  `duration_target_sec`, so a host that did not send the start command itself
+  (a session started on the watch, or by another process) can tell where a
+  session started and whether it completed or was abandoned. Omitted keys
+  leave older readers unaffected.
+
+### Changed
+- **Source-breaking:** a pattern that binds every associated value of
+  `.started` or `.summary` needs one more binding (or `_`), e.g.
+  `case .summary(let id, let duration, let metrics, _)`. Patterns without
+  bindings (`case .summary = event`) are unaffected.
+
+### Docs
+- Public docs and source comments no longer reference private repositories.
+
 ## [0.0.5] - 2026-06-15
 
 ### Added
