@@ -51,9 +51,4 @@ jobs:
       - name: Install SwiftLint
         run: brew install swiftlint
       - name: SwiftLint
-        run: |
-          if [ -f ".swiftlint.yml" ]; then
-            swiftlint --strict
-          else
-            echo "No .swiftlint.yml — skipping"
-          fi
+        run: swiftlint lint --strict --config .swiftlint.yml
